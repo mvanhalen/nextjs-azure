@@ -36,6 +36,6 @@ jobs:
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
         with:
-          app-name: nodejstest
+          app-name: "nodejstest"
           slot-name: "Production"
           package: ./build/standalone
