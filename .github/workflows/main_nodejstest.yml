@@ -1,16 +1,17 @@
-name: Build and deploy Next.js app to Azure Web App - nodejstest
+name: Build and deploy Next.js app to Azure Web App
 
 on:
   push:
     branches:
-      - main
+      - main  
   workflow_dispatch:
+
+env:
+  WEBAPP_NAME: "medium-next-app-service-deploy"
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
 
     steps:
       - uses: actions/checkout@v4
@@ -18,63 +19,14 @@ jobs:
       - name: Set up Node.js version
         uses: actions/setup-node@v4
         with:
-          node-version: '22.x'
+          node-version: "22.x"
 
-      - name: Cache node modules
-        uses: actions/cache@v4
-        with:
-          path: ~/.npm
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: ${{ runner.os }}-node-
-
-      - name: Install dependencies
-        run: npm install
-
-      - name: Build Next.js app
-        run: npm run build
-
-      - name: Prepare deployment package
+      - name: npm install, build, and test
         run: |
-          mkdir -p deploy
-          cp -r ./build/standalone/* deploy/ # Copy standalone contents
-          cp -r ./build/standalone/.next deploy/.next # Copy .next to root
-          cp -r ./public deploy/ || true
-          cp -r ./build/static deploy/build/ || true
-          cp ./package.json deploy/
-          cp ./package-lock.json deploy/ || true
-          cd deploy
-          npm install --production
-          # Debug: Verify .next/BUILD_ID
-          ls -la .next
-          cat .next/BUILD_ID || echo "BUILD_ID missing"
-          zip -r ../release.zip .
-        env:
-          NODE_ENV: production
-
-      - name: Upload artifact for deployment job
-        uses: actions/upload-artifact@v4
-        with:
-          name: nextjs-app
-          path: release.zip
-
-  deploy:
-    runs-on: ubuntu-latest
-    needs: build
-    environment:
-      name: 'Production'
-      url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
-    permissions:
-      id-token: write
-      contents: read
-
-    steps:
-      - name: Download artifact from build job
-        uses: actions/download-artifact@v4
-        with:
-          name: nextjs-app
-
-      - name: Unzip artifact for deployment
-        run: unzip release.zip -d ./deploy
+          npm install
+          npm run build
+          mv ./build/static ./build/standalone/build
+          mv ./public ./build/standalone
 
       - name: Login to Azure
         uses: azure/login@v2
@@ -87,6 +39,6 @@ jobs:
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
         with:
-          app-name: 'nodejstest'
-          slot-name: 'Production'
-          package: ./deploy
+          app-name: ${{ env.WEBAPP_NAME }}
+          slot-name: "Production"
+          package: ./build/standalone
