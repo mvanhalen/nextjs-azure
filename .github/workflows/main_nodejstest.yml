@@ -23,13 +23,13 @@ jobs:
         with:
           node-version: '20.x'
 
-      - name: npm install, build, and test
+      - name: npm install, build, and test #This is needed for app service
         run: |
           npm install
           npm run build
-          mv ./build/static ./build/standalone/build
+          mv ./build/static ./build/standalone/build 
           mv ./public ./build/standalone
-
+        
       - name: Zip artifact for deployment
         run: zip release.zip ./* -r
 
@@ -71,4 +71,4 @@ jobs:
         with:
           app-name: 'nodejstest'
           slot-name: 'Production'
-          package: ./build/standalone
+          package: ./build/standalone #This is needed for app service
