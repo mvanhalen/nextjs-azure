@@ -6,9 +6,6 @@ on:
       - main  
   workflow_dispatch:
 
-env:
-  WEBAPP_NAME: "medium-next-app-service-deploy"
-
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -39,6 +36,6 @@ jobs:
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
         with:
-          app-name: ${{ env.WEBAPP_NAME }}
+          app-name: nodejstest
           slot-name: "Production"
           package: ./build/standalone
