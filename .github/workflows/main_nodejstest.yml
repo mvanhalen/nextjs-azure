@@ -10,7 +10,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      contents: read # Required for actions/checkout
+      contents: read
 
     steps:
       - uses: actions/checkout@v4
@@ -18,7 +18,14 @@ jobs:
       - name: Set up Node.js version
         uses: actions/setup-node@v4
         with:
-          node-version: '22.x' # Use LTS version supported by Azure App Service
+          node-version: '22.x'
+
+      - name: Cache node modules
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: ${{ runner.os }}-node-
 
       - name: Install dependencies
         run: npm install
@@ -30,10 +37,15 @@ jobs:
         run: |
           mkdir -p deploy
           cp -r build/standalone/* deploy/
-          cp -r public deploy/ || true # Copy public folder if it exists
-          cp -r build/static deploy/build/ || true # Copy static assets if generated
+          cp -r public deploy/ || true
+          cp -r build/static deploy/build/ || true
+          cp package.json deploy/
+          cp package-lock.json deploy/ || true
           cd deploy
+          npm install --production
           zip -r ../release.zip .
+        env:
+          NODE_ENV: production
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
@@ -48,8 +60,8 @@ jobs:
       name: 'Production'
       url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
     permissions:
-      id-token: write # Required for Azure login
-      contents: read # Required for actions/checkout
+      id-token: write
+      contents: read
 
     steps:
       - name: Download artifact from build job
