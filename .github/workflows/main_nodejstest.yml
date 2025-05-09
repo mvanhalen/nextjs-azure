@@ -37,12 +37,16 @@ jobs:
         run: |
           mkdir -p deploy
           cp -r build/standalone/* deploy/
+          cp -r build/standalone/.next deploy/.next # Place .next in deployment root
           cp -r public deploy/ || true
           cp -r build/static deploy/build/ || true
           cp package.json deploy/
           cp package-lock.json deploy/ || true
           cd deploy
           npm install --production
+          # Verify .next/BUILD_ID exists
+          ls -la .next
+          cat .next/BUILD_ID || echo "BUILD_ID missing"
           zip -r ../release.zip .
         env:
           NODE_ENV: production
